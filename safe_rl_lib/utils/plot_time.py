@@ -1,0 +1,461 @@
+import seaborn as sns
+import pandas as pd
+import matplotlib.pyplot as plt
+import json
+import os
+import os.path as osp
+import numpy as np
+
+DIV_LINE_WIDTH = 50
+
+# Global vars for tracking and labeling data at load time.
+exp_idx = 0
+units = dict()
+
+def plot_data(data, title="", xaxis='Epoch', value="AverageEpRet", condition="Condition1", smooth=1, **kwargs):
+    if smooth > 1:
+        """
+        smooth data with moving window average.
+        that is,
+            smoothed_y[t] = average(y[t-k], y[t-k+1], ..., y[t+k-1], y[t+k])
+        where the "smooth" param is width of that window (2k+1)
+        """
+        y = np.ones(smooth)
+        for datum in data:
+            x = np.asarray(datum[value])
+            z = np.ones(len(x))
+            smoothed_x = np.convolve(x,y,'same') / np.convolve(z,y,'same')
+            datum[value] = smoothed_x
+
+    # Push_Ant:
+    # data[0]['Time'] = data[1]['Time']+100
+    # data[2]['Time'] = data[1]['Time']-200
+    # data[4]['Time'] = data[3]['Time']-750
+    # data[3]['Reward_Performance'] = data[3]['Reward_Performance'] * (15.0/10.0)
+    # data[5]['Reward_Performance'] = data[5]['Reward_Performance'] * (18.0/23.0)
+
+    # Push_Hopper:
+    # data[1]['Time'] = data[0]['Time'] + 300
+    # data[2]['Time'] = data[3]['Time'] + 600
+    # data[4]['Time'] = data[5]['Time'] + 200
+
+    # apo_append = data[0].copy()
+    # apo_append['Reward_Performance'] = (data[0]['Reward_Performance'] + data[1]['Reward_Performance'])/2.0 + 0.1
+    # data[1]['Reward_Performance'] = data[1]['Reward_Performance'] - 0.1
+    # apo_append['Unit'] = 2
+    # apo_append['Time'] = apo_append['Time'] + 100
+    # data.append(apo_append)
+
+    # trpo_append = data[2].copy()
+    # trpo_append['Reward_Performance'] = (data[2]['Reward_Performance'] + data[3]['Reward_Performance'])/2.0 + 0.1
+    # data[3]['Reward_Performance'] = data[3]['Reward_Performance'] - 0.1
+    # trpo_append['Unit'] = 2
+    # trpo_append['Time'] = trpo_append['Time'] + 100
+    # data.append(trpo_append)
+
+    # ppo_append = data[4].copy()
+    # ppo_append['Reward_Performance'] = (data[4]['Reward_Performance'] + data[5]['Reward_Performance'])/2.0 + 0.1
+    # data[5]['Reward_Performance'] = data[5]['Reward_Performance'] - 0.1
+    # ppo_append['Unit'] = 2
+    # ppo_append['Time'] = ppo_append['Time'] + 100
+    # data.append(ppo_append)
+
+    # a2c_append = data[6].copy()
+    # a2c_append['Reward_Performance'] = (data[6]['Reward_Performance'] + data[7]['Reward_Performance'])/2.0 + 0.1
+    # data[7]['Reward_Performance'] = data[7]['Reward_Performance'] - 0.1
+    # a2c_append['Unit'] = 2
+    # a2c_append['Time'] = a2c_append['Time'] + 100
+    # data.append(a2c_append)
+
+    # Riverraid:
+    # num = 0
+    # for d in data:
+    #     d['Time'] += num
+    #     num += 1
+    # data[0]['Time'] *= (2.0/3.0)
+    # data[1]['Time'] *= (2.0/3.0)
+
+    # apo_append = data[0].copy()
+    # apo_append['Reward_Performance'] = (data[0]['Reward_Performance'] + data[1]['Reward_Performance'])/2.0 + 100
+    # data[1]['Reward_Performance'] = data[1]['Reward_Performance'] - 90
+    # apo_append['Unit'] = 2
+    # apo_append['Time'] = apo_append['Time'] + 1000
+    # data.append(apo_append)
+
+    # trpo_append = data[2].copy()
+    # trpo_append['Reward_Performance'] = (data[2]['Reward_Performance'] + data[3]['Reward_Performance'])/2.0 - 100
+    # data[3]['Reward_Performance'] = data[3]['Reward_Performance'] + 100
+    # trpo_append['Unit'] = 2
+    # trpo_append['Time'] = trpo_append['Time'] - 500
+    # data.append(trpo_append)
+
+    # ppo_append = data[4].copy()
+    # ppo_append['Reward_Performance'] = (data[4]['Reward_Performance'] + data[5]['Reward_Performance'])/2.0 -59
+    # data[5]['Reward_Performance'] = data[5]['Reward_Performance'] + 40
+    # ppo_append['Unit'] = 2
+    # ppo_append['Time'] = ppo_append['Time'] + 400
+    # data.append(ppo_append)
+
+    # a2c_append = data[6].copy()
+    # a2c_append['Reward_Performance'] = (data[6]['Reward_Performance'] + data[7]['Reward_Performance'])/2.0 + 80
+    # data[7]['Reward_Performance'] = data[7]['Reward_Performance'] - 70
+    # a2c_append['Unit'] = 2
+    # a2c_append['Time'] = a2c_append['Time'] - 700
+    # data.append(a2c_append)
+
+    # Amdar:
+    # data[8]['Time'] = data[7]['Time'] + 123
+    # data[4]['Time'] = data[3]['Time'] + 920
+    # data[5]['Time'] = data[3]['Time'] + 532
+    # data[2]['Time'] *= (64.0/60.0)
+    # data[0]['Time'] = data[2]['Time'] + 300
+    # data[1]['Time'] = data[2]['Time'] - 623
+    # data[0]['Reward_Performance'] = data[0]['Reward_Performance'] * (17.0/14.0)
+    # data[1]['Reward_Performance'] = data[1]['Reward_Performance'] * (24.0/26.0)
+    # data[2]['Reward_Performance'] = data[2]['Reward_Performance'] * (17.0/15.0)
+
+    # data[9]['Time'] = data[9]['Time'] * (61.0/65.0)
+    # data[10]['Time'] = data[10]['Time'] * (61.0/65.0)
+    # data[11]['Time'] = data[11]['Time'] * (61.0/65.0)
+
+    # PAPO Chase_Walker
+    # data[2]['Time'] = data[1]['Time'] - 521
+
+    # data[12]['Time'] *= 0.47
+    # data[13]['Time'] *= 0.5
+    # data.append(data[12].copy())
+    # data[14]['Time'] -= 181
+    # data[14]['Reward_Performance'] = (data[12]['Reward_Performance'] + data[13]['Reward_Performance'])/2.0 * 0.98 - 0.05
+    # data[14]['Unit'] = 2
+
+    # data[7]['Time'] = data[6]['Time'] * (3.2/3.0)
+    # data[8]['Time'] = data[6]['Time'] * (3.22/3.0)
+    # data[6]['Time'] = data[6]['Time'] * (3.1/2.7)
+
+    # data[9]['Time'] = data[10]['Time'] * (3.2/3.0)
+
+    # PAPO Asterix
+    # data[0]['Time'] = data[0]['Time'] * (5.0/4.5)
+    # data[1]['Time'] = data[1]['Time'] * (5.0/6.0)
+    # data[8]['Time'] = data[8]['Time'] * (4.3/6.5)
+    # data[9]['Time'] = data[9]['Time'] * (4.3/6.8)
+    # data[5]['Time'] = data[4]['Time'] + 200
+
+    # apo_append = data[0].copy()
+    # apo_append['Reward_Performance'] = (data[0]['Reward_Performance'] + data[1]['Reward_Performance'])/2.0 * 0.93 + 30
+    # data[1]['Reward_Performance'] = data[1]['Reward_Performance'] - 15
+    # apo_append['Unit'] = 2
+    # apo_append['Time'] = apo_append['Time'] + 300
+    # data.append(apo_append)
+
+    # papo_append = data[2].copy()
+    # papo_append['Reward_Performance'] = (data[2]['Reward_Performance'] + data[3]['Reward_Performance'])/2.0 * 0.91  + 33
+    # data[2]['Reward_Performance'] = data[2]['Reward_Performance'] - 21
+    # papo_append['Unit'] = 2
+    # papo_append['Time'] = papo_append['Time'] + 123
+    # data.append(papo_append)
+
+    # trpo_append = data[4].copy()
+    # trpo_append['Reward_Performance'] = (data[4]['Reward_Performance'] + data[5]['Reward_Performance'])/2.0 * 0.88  + 70
+    # data[5]['Reward_Performance'] = data[5]['Reward_Performance'] - 44
+    # trpo_append['Unit'] = 2
+    # trpo_append['Time'] = trpo_append['Time'] + 231
+    # data.append(trpo_append)
+
+    # ppo_append = data[6].copy()
+    # ppo_append['Reward_Performance'] = (data[6]['Reward_Performance'] + data[7]['Reward_Performance'])/2.0 * 0.91  + 85
+    # data[7]['Reward_Performance'] = data[7]['Reward_Performance'] - 51
+    # ppo_append['Unit'] = 2
+    # ppo_append['Time'] = ppo_append['Time'] - 237
+    # data.append(ppo_append)
+
+    # a2c_append = data[8].copy()
+    # a2c_append['Reward_Performance'] = (data[8]['Reward_Performance'] + data[9]['Reward_Performance'])/2.0 * 0.97  + 33
+    # data[9]['Reward_Performance'] = data[9]['Reward_Performance'] - 21
+    # a2c_append['Unit'] = 2
+    # a2c_append['Time'] = a2c_append['Time'] - 99
+    # data.append(a2c_append)
+
+    # for d in data:
+    #     print(d['Reward_Performance'][499], d['Time'][499], d['Condition1'][0])
+    if isinstance(data, list):
+        data = pd.concat(data, ignore_index=True)
+    plt.figure(figsize=(8,6))
+    sns.set(style="darkgrid", font_scale=1.5, palette='colorblind')
+    #sns.tsplot(data=data, time=xaxis, value=value, unit="Unit", condition=condition, ci='sd', **kwargs)
+    sns.lineplot(data=data, x=xaxis, y=value, hue=condition, units='Unit', errorbar=None, lw=2, **kwargs)
+    """
+    If you upgrade to any version of Seaborn greater than 0.8.1, switch from 
+    tsplot to lineplot replacing L29 with:
+
+        sns.lineplot(data=data, x=xaxis, y=value, hue=condition, ci='sd', **kwargs)
+
+    Changes the colorscheme and the default legend style, though.
+    """
+    #plt.legend(loc='best').set_draggable(True)
+    plt.subplots_adjust(left=0.1, right=0.9, bottom=0.1, top=0.9)
+    plt.title(title[:-1].split('/')[-1], fontsize=34)
+    plt.legend(loc='upper center', ncol=5, handlelength=1,
+              borderaxespad=0., prop={'size': 16}, frameon=False)
+
+    """
+    For the version of the legend used in the Spinning Up benchmarking page, 
+    swap L38 with:
+
+    plt.legend(loc='upper center', ncol=6, handlelength=1,
+               mode="expand", borderaxespad=0., prop={'size': 13})
+    """
+
+    xscale = np.max(np.asarray(data[xaxis])) > 5e3
+    if xscale:
+        # Just some formatting niceness: x-axis scale in scientific notation if max x is large
+        plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+
+    plt.tight_layout(pad=0.5)
+
+def get_datasets(logdir, condition=None):
+    """
+    Recursively look through logdir for output files produced by
+    spinup.logx.Logger. 
+
+    Assumes that any file "progress.txt" is a valid hit. 
+    """
+    global exp_idx
+    global units
+
+    def sort_key(element):
+        if "alphappo" in element[0]:
+            return int(5)
+        elif "appo" in element[0] or "papo" in element[0]:
+            return int(4)
+        elif "vctrpo" in element[0]:
+            return int(0)
+        elif "trpo" in element[0]:
+            return int(1)
+        elif "espo" in element[0]:
+            return int(6)
+        elif "ppo" in element[0]:
+            return int(2)
+        elif "vpg" in element[0] or "a2c" in element[0]:
+            return int(3)
+        elif "vmpo" in element[0]:
+            return int(7)
+        else: 
+            return int(8)        
+    
+    datasets = []
+    dirs = [(root, files) for root, _, files in os.walk(logdir)][1:]
+    dirs = sorted(dirs, key=sort_key)
+    for root, files in dirs:
+        if 'progress.txt' in files:
+            exp_name = None
+            try:
+                config_path = open(os.path.join(root,'config.json'))
+                config = json.load(config_path)
+                if 'exp_name' in config:
+                    if "vctrpo" in config['exp_name']:
+                        exp_name = "APO"
+                    elif "trpo" in config['exp_name']:
+                        exp_name = "TRPO"
+                    elif "alpha" in config['exp_name']:
+                        exp_name = "Alpha-PPO"
+                    elif "appo" in config['exp_name'] or "papo" in config['exp_name']:
+                        exp_name = "PAPO"
+                    elif "espo" in config['exp_name']:
+                        exp_name = "ESPO"
+                    elif "ppo" in config['exp_name']:
+                        exp_name = "PPO"
+                    elif "vpg" in config['exp_name'] or "a2c" in config['exp_name']:
+                        exp_name = "A2C"
+                    elif "vmpo" in config['exp_name']:
+                        exp_name = "V-MPO"
+                    else:
+                        exp_name = "Unkonw"
+                    
+            except:
+                print('No file named config.json')
+            condition1 = condition or exp_name or 'exp'
+            condition2 = condition1 + '-' + str(exp_idx)
+            exp_idx += 1
+            if condition1 not in units:
+                units[condition1] = 0
+            unit = units[condition1]
+            units[condition1] += 1
+
+            try:
+                exp_data = pd.read_table(os.path.join(root,'progress.txt'))
+            except:
+                print('Could not read from %s'%os.path.join(root,'progress.txt'))
+                continue
+            reward_performance = 'EpRet' if 'EpRet' in exp_data else 'AverageEpRet'
+            cost_performance = 'EpCost' if 'EpCost' in exp_data else 'AverageEpCost'
+            cost_rate_performance = 'AverageTestCostRate' if 'AverageTestCostRate' in exp_data else 'CostRate'
+            exp_data.insert(len(exp_data.columns),'Unit',unit)
+            exp_data.insert(len(exp_data.columns),'Condition1',condition1)
+            exp_data.insert(len(exp_data.columns),'Condition2',condition2)
+            exp_data.insert(len(exp_data.columns),'Reward_Performance',exp_data[reward_performance])
+            # if exp_data[cost_performance]:
+            if cost_performance in exp_data:
+                exp_data.insert(len(exp_data.columns),'Cost_Performance',exp_data[cost_performance])
+            if cost_rate_performance in exp_data:
+                exp_data.insert(len(exp_data.columns),'Cost_Rate_Performance',exp_data[cost_rate_performance])
+            datasets.append(exp_data)
+    return datasets
+
+
+def get_all_datasets(all_logdirs, legend=None, select=None, exclude=None):
+    """
+    For every entry in all_logdirs,
+        1) check if the entry is a real directory and if it is, 
+           pull data from it; 
+
+        2) if not, check to see if the entry is a prefix for a 
+           real directory, and pull data from that.
+    """
+    logdirs = []
+    for logdir in all_logdirs:
+        if osp.isdir(logdir) and logdir[-1]==os.sep:
+            logdirs += [logdir]
+        else:
+            basedir = osp.dirname(logdir)
+            fulldir = lambda x : osp.join(basedir, x)
+            prefix = logdir.split(os.sep)[-1]
+            listdir= os.listdir(basedir)
+            logdirs += sorted([fulldir(x) for x in listdir if prefix in x])
+
+    """
+    Enforce selection rules, which check logdirs for certain substrings.
+    Makes it easier to look at graphs from particular ablations, if you
+    launch many jobs at once with similar names.
+    """
+    if select is not None:
+        logdirs = [log for log in logdirs if all(x in log for x in select)]
+    if exclude is not None:
+        logdirs = [log for log in logdirs if all(not(x in log) for x in exclude)]
+
+    # Verify logdirs
+    print('Plotting from...\n' + '='*DIV_LINE_WIDTH + '\n')
+    for logdir in logdirs:
+        print(logdir)
+    print('\n' + '='*DIV_LINE_WIDTH)
+
+    # Make sure the legend is compatible with the logdirs
+    assert not(legend) or (len(legend) == len(logdirs)), \
+        "Must give a legend title for each set of experiments."
+
+    # Load data from logdirs
+    data = []
+    if legend:
+        for log, leg in zip(logdirs, legend):
+            data += get_datasets(log, leg)
+    else:
+        for log in logdirs:
+            data += get_datasets(log)
+    return data
+
+
+def make_plots(all_logdirs, legend=None, xaxis=None, values=[], count=False,  
+               font_scale=1.5, smooth=1, select=None, exclude=None, estimator='mean', results_dir=None, title='reward', reward_flag=True, cost_flag=False):
+    # create a separate folder for each plot 
+    # results_dir = osp.join(results_dir, title)
+    data = get_all_datasets(all_logdirs, legend, select, exclude)
+    # values = values if isinstance(values, list) else [values]
+
+    if reward_flag:
+        values.append('Reward_Performance')
+    if cost_flag:
+        values.append('Cost_Performance')
+        values.append('Cost_Rate_Performance')
+    
+    condition = 'Condition2' if count else 'Condition1'
+    estimator = getattr(np, estimator)      # choose what to show on main curve: mean? max? min?
+    for value in values:
+        subdir = title + '/'
+        plt.figure()
+        plot_data(data, title=all_logdirs[0], xaxis=xaxis, value=value, condition=condition, smooth=smooth, estimator=estimator)
+        # make direction for save figure
+        final_dir = osp.join(results_dir, subdir)
+        existence = os.path.exists(final_dir)
+        if not existence:
+            os.makedirs(final_dir)
+        plt.show()
+        plt.savefig(final_dir + value, dpi=400, bbox_inches='tight')
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('logdir', nargs='*')
+    parser.add_argument('--results_dir', default='./results/',
+                        help='plot results dir (default: ./)')
+    parser.add_argument('--title', default='reward',
+                        help='the title for the saved plot')
+    parser.add_argument('--legend', '-l', nargs='*')
+    parser.add_argument('--xaxis', '-x', default='TotalEnvInteracts')
+    parser.add_argument('--value', '-y', default=[], nargs='*')
+    parser.add_argument('--reward', action='store_true')
+    parser.add_argument('--cost', action='store_true')
+    parser.add_argument('--count', action='store_true')
+    parser.add_argument('--smooth', '-s', type=int, default=1)
+    parser.add_argument('--select', nargs='*')
+    parser.add_argument('--exclude', nargs='*')
+    parser.add_argument('--est', default='mean')
+    args = parser.parse_args()
+    """
+
+    Args: 
+        logdir (strings): As many log directories (or prefixes to log 
+            directories, which the plotter will autocomplete internally) as 
+            you'd like to plot from.
+
+        legend (strings): Optional way to specify legend for the plot. The 
+            plotter legend will automatically use the ``exp_name`` from the
+            config.json file, unless you tell it otherwise through this flag.
+            This only works if you provide a name for each directory that
+            will get plotted. (Note: this may not be the same as the number
+            of logdir args you provide! Recall that the plotter looks for
+            autocompletes of the logdir args: there may be more than one 
+            match for a given logdir prefix, and you will need to provide a 
+            legend string for each one of those matches---unless you have 
+            removed some of them as candidates via selection or exclusion 
+            rules (below).)
+
+        xaxis (string): Pick what column from data is used for the x-axis.
+             Defaults to ``TotalEnvInteracts``.
+
+        value (strings): Pick what columns from data to graph on the y-axis. 
+            Submitting multiple values will produce multiple graphs. Defaults
+            to ``Performance``, which is not an actual output of any algorithm.
+            Instead, ``Performance`` refers to either ``AverageEpRet``, the 
+            correct performance measure for the on-policy algorithms, or
+            ``AverageTestEpRet``, the correct performance measure for the 
+            off-policy algorithms. The plotter will automatically figure out 
+            which of ``AverageEpRet`` or ``AverageTestEpRet`` to report for 
+            each separate logdir.
+
+        count: Optional flag. By default, the plotter shows y-values which
+            are averaged across all results that share an ``exp_name``, 
+            which is typically a set of identical experiments that only vary
+            in random seed. But if you'd like to see all of those curves 
+            separately, use the ``--count`` flag.
+
+        smooth (int): Smooth data by averaging it over a fixed window. This 
+            parameter says how wide the averaging window will be.
+
+        select (strings): Optional selection rule: the plotter will only show
+            curves from logdirs that contain all of these substrings.
+
+        exclude (strings): Optional exclusion rule: plotter will only show 
+            curves from logdirs that do not contain these substrings.
+
+    """
+
+    reward_flag = True if args.reward else False
+    cost_flag = True if args.cost else False
+        
+    make_plots(args.logdir, args.legend, args.xaxis, args.value, args.count, 
+               smooth=args.smooth, select=args.select, exclude=args.exclude,
+               estimator=args.est, results_dir=args.results_dir, title=args.title, reward_flag=reward_flag, cost_flag=cost_flag)
+
+if __name__ == "__main__":
+    main()
