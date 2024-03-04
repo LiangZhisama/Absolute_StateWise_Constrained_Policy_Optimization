@@ -381,15 +381,7 @@ def ascpo(env_fn, omega_1, omega_2, k=7.0, actor_critic=core.MLPActorCritic, ac_
         mean_cost_val = cost_val.mean()
         var_mean_surr = mu * torch.abs(L**2 + 2*L*torch.abs(mean_cost_val)) - min_J_square
 
-        print("=======")
-        print(f"min_J_square: {min_J_square}, L: {L.item()}, mean_cost_val: {mean_cost_val.item()}, num_episodes: {num_episodes}, EpMaxCost: {EpMaxCost}")
-        print(f"surr_cost: {surr_cost.item()}, mean_var_surr: {mean_var_surr.item()}, var_mean_surr: {var_mean_surr.item()}")
         return surr_cost + k*(mean_var_surr + var_mean_surr)
-
-        # 1. 用disc_adc还是adc
-        # 2. adc是否中心化
-        # 3. 4*kl instead of 2 sqrt(0.5kl)
-        # 4. mean_cost_val -> cost_val[start_idx].mean()    
         
         
     def compute_loss_pi(data, cur_pi):
