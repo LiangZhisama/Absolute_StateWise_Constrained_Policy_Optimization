@@ -2,4 +2,4 @@
 
 This repo contains the code for paper Absolute State-wise Constrained Policy Optimization.
 
-To run SCPO, please visit https://github.com/intelligent-control-lab/guard which contains this repo as a submodule.
+To run ASCPO, please visit https://github.com/intelligent-control-lab/guard for installation details.
